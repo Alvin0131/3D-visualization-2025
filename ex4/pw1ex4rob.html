@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js pw1</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #ccc;
+				color: #000;
+				margin: 0; /* Remove default margin */
+        		overflow: hidden; /* Hide scrollbars */
+        		display: flex; /* Use flexbox for layout */
+			}
+			#canvas{
+            	width: 100%; 
+            	height: 100%; 
+            	position: absolute;
+            	top: 0;
+            	left: 0;
+        	}    
+		</style>
+	</head>
+	<body>
+		<div id="canvas"></div></body>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import { VRButton } from 'three/addons/webxr/VRButton.js';
+
+
+function init(){
+    //canvas
+    const canvas = document.querySelector('#canvas');
+    //scene
+    const scene = new THREE.Scene();
+    //renderer
+    const renderer = new THREE.WebGLRenderer({antialias: true});
+
+    
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.querySelector('#canvas').appendChild(renderer.domElement);
+    renderer.xr.enabled = true;
+	document.body.appendChild( VRButton.createButton( renderer ) );
+
+
+    //camera
+    const fov = 75;
+    const aspect =  window.innerWidth / window.innerHeight;   
+    const near = 0.01;
+    const far = 800;
+    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    camera.position.set(30, 30, 30);
+    camera.lookAt(0, 5, 0);
+
+    //orbiral controls
+    const controls = new OrbitControls( camera, renderer.domElement );
+    controls.enableDamping = true; 
+    controls.dampingFactor = 0.05;
+    controls.screenSpacePanning = false;
+    controls.minDistance = 1;
+    controls.maxDistance = 1000;
+    controls.maxPolarAngle = Math.PI;
+    controls.enableZoom = true;
+    controls.zoomSpeed = 1.0;
+
+    //window resize
+    window.addEventListener('resize', function() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+    });
+
+    //light
+    const color = 0xFFFFFF;
+    const intensity = 3;
+    const light = new THREE.DirectionalLight(color, intensity);
+    light.position.set(-60, 100, 90);
+    scene.add(light);
+
+    const dirLight1 = new THREE.DirectionalLight( 0xffffff, 3 );
+    dirLight1.position.set( 60, 60, -160 );
+    scene.add( dirLight1 );
+
+    const dirLight2 = new THREE.DirectionalLight( 0xffffff, 3 );
+    dirLight2.position.set( 60, -60, 60 );
+    scene.add( dirLight2 );
+
+    const dirLight3 = new THREE.DirectionalLight( 0xffffff, 3 );
+    dirLight3.position.set( 0,0,-200 );
+    scene.add( dirLight3 );
+
+    //coordinate
+    const axesHelper = new THREE.AxesHelper( 500 );
+    scene.add(axesHelper)
+
+    mande(bodyleft(),scene);
+    mande(bodyright(),scene);
+    pole(scene);
+
+
+
+
+
+    const objects = [];
+
+    const leftarmsys = new THREE.Object3D();
+    scene.add(leftarmsys);
+    objects.push(leftarmsys);
+
+
+    const sphere1 = joint();
+    sphere1.position.set(4,12,3)
+    leftarmsys.add(sphere1);
+
+
+    const arm1spin = new THREE.Object3D();
+    arm1spin.position.x = 4;
+    arm1spin.position.y = 12;
+    arm1spin.position.z = 3;
+    leftarmsys.add(arm1spin);
+    const arm1 = arm();
+    arm1spin.add(arm1);
+    arm1.position.set(5.5,0,0);
+    arm1.rotation.z = Math.PI / 2;
+    objects.push(arm1);
+
+
+    const sphere2 = joint();
+    arm1spin.add(sphere2);
+    sphere2.position.set(11,0,0);
+    const arm2spin = new THREE.Object3D();
+    arm2spin.position.x = 11;
+    arm2spin.position.y = 0;
+    arm2spin.position.z = 0;
+    const arm2 = arm();
+    arm1spin.add(arm2spin);
+    arm2spin.add(arm2);
+    arm2.position.set(5.5,0,0); // Set position (x, y, z)
+    arm2.rotation.z = Math.PI / 2;
+    objects.push(arm2);
+
+
+    const sphere3 = joint();
+    arm2spin.add(sphere3);
+    sphere3.position.set(11,0,0)
+    const arm3spin = new THREE.Object3D();
+    arm3spin.position.x = 11;
+    arm3spin.position.y = 0;
+    arm3spin.position.z = 0;
+    const arm3 = arm();
+    arm2spin.add(arm3spin);
+    arm3spin.add(arm3);
+    arm3.position.set(5.5,0,0); // Set position (x, y, z)
+    arm3.rotation.z = Math.PI / 2;
+    objects.push(arm3);
+
+    const sphere4 = joint();
+    arm3spin.add(sphere4);
+    sphere4.position.set(11,0,0)
+    const handsys = new THREE.Object3D();
+    arm3spin.add(handsys);
+    handsys.position.set(11,0,0);
+    const hand1 = hand();
+    const hand2 = hand();
+    handsys.add(hand1);
+    handsys.add(hand2);
+    hand1.position.set(0.5,0.25,0); // Set position (x, y, z)
+    hand1.rotation.x=Math.PI/2;
+    hand1.rotation.z = Math.PI / 2;
+    hand2.position.set(0.5,-0.25,0); // Set position (x, y, z)
+    hand2.rotation.z = Math.PI / 2;
+    hand2.rotation.x= Math.PI/2;
+
+    const leftObjects = []; // Array to store left arm objects
+
+    const leftArmSys = new THREE.Object3D();
+    scene.add(leftArmSys);
+    leftObjects.push(leftArmSys);
+
+    // Sphere 1 (Joint 1)
+    const sphere1Left = joint();
+    sphere1Left.position.set(-4, 12, 3); // Negate x position
+    leftArmSys.add(sphere1Left);
+
+    // Arm 1 Spin
+    const arm1SpinLeft = new THREE.Object3D();
+    arm1SpinLeft.position.set(-4, 12, 3); // Negate x position
+    leftArmSys.add(arm1SpinLeft);
+
+    const arm1Left = arm();
+    arm1SpinLeft.add(arm1Left);
+    arm1Left.position.set(-5.5, 0, 0); // Negate x position
+    arm1Left.rotation.z = -Math.PI / 2; // Negate rotation
+    leftObjects.push(arm1Left);
+
+    // Sphere 2 (Joint 2)
+    const sphere2Left = joint();
+    arm1SpinLeft.add(sphere2Left);
+    sphere2Left.position.set(-11, 0, 0); // Negate x position
+
+    // Arm 2 Spin
+    const arm2SpinLeft = new THREE.Object3D();
+    arm2SpinLeft.position.set(-11, 0, 0); // Negate x position
+    arm1SpinLeft.add(arm2SpinLeft);
+
+    const arm2Left = arm();
+    arm2SpinLeft.add(arm2Left);
+    arm2Left.position.set(-5.5, 0, 0); // Negate x position
+    arm2Left.rotation.z = -Math.PI / 2; // Negate rotation
+    leftObjects.push(arm2Left);
+
+    // Sphere 3 (Joint 3)
+    const sphere3Left = joint();
+    arm2SpinLeft.add(sphere3Left);
+    sphere3Left.position.set(-11, 0, 0); // Negate x position
+
+    // Arm 3 Spin
+    const arm3SpinLeft = new THREE.Object3D();
+    arm3SpinLeft.position.set(-11, 0, 0); // Negate x position
+    arm2SpinLeft.add(arm3SpinLeft);
+
+    const arm3Left = arm();
+    arm3SpinLeft.add(arm3Left);
+    arm3Left.position.set(-5.5, 0, 0); // Negate x position
+    arm3Left.rotation.z = -Math.PI / 2; // Negate rotation
+    leftObjects.push(arm3Left);
+
+    // Sphere 4 (Joint 4)
+    const sphere4Left = joint();
+    arm3SpinLeft.add(sphere4Left);
+    sphere4Left.position.set(-11, 0, 0); // Negate x position
+
+    // Hand System
+    const handSysLeft = new THREE.Object3D();
+    arm3SpinLeft.add(handSysLeft);
+    handSysLeft.position.set(-11, 0, 0); // Negate x position
+
+    // Hand 1 and Hand 2
+    const hand1Left = hand();
+    const hand2Left = hand();
+    handSysLeft.add(hand1Left);
+    handSysLeft.add(hand2Left);
+
+    hand1Left.position.set(-0.5, 0.25, 0); // Negate x position
+    hand1Left.rotation.x = Math.PI / 2; // Keep the same
+    hand1Left.rotation.z = Math.PI / 2; // Negate rotation
+
+    hand2Left.position.set(-0.5, -0.25, 0); // Negate x position
+    hand2Left.rotation.z = Math.PI / 2; // Negate rotation
+    hand2Left.rotation.x = Math.PI / 2; // Keep the same
+
+
+    
+
+
+
+
+
+
+
+    const gui = new GUI();
+
+    //gui angle data
+    const rotationData = [];
+    for (let i = 0; i < 21; i++) {
+        rotationData[i] = {
+            angle: 0
+        };
+    }
+    if (!rotationData[0]) rotationData[0] = { angle: 0 };
+
+
+
+    const arm1Folder = gui.addFolder('left Arm 1 Spin');
+    arm1Folder.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('X').onChange(function(value) {
+        arm1spin.rotation.x = value;
+    });
+    arm1Folder.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('Y').onChange(function(value) {
+        arm1spin.rotation.y = value;
+    });
+    arm1Folder.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('Z').onChange(function(value) {
+        arm1spin.rotation.z = value;
+    });
+
+    const arm2Folder = gui.addFolder('left Arm 2 Spin');
+    arm2Folder.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('X').onChange(function(value) {
+        arm2spin.rotation.x = value;
+    });
+    arm2Folder.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('Y').onChange(function(value) {
+        arm2spin.rotation.y = value;
+    });
+    arm2Folder.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('Z').onChange(function(value) {
+        arm2spin.rotation.z = value;
+    });
+
+    const arm3Folder = gui.addFolder('left Arm 3 Spin');
+    arm3Folder.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('X').onChange(function(value) {
+        arm3spin.rotation.x = value;
+    });
+    arm3Folder.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('Y').onChange(function(value) {
+        arm3spin.rotation.y = value;
+    });
+    arm3Folder.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('Z').onChange(function(value) {
+        arm3spin.rotation.z = value;
+    });
+
+    gui.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('Wrist rotate').onChange(function(value) {
+        handsys.rotation.x = value;
+    });
+    gui.add(rotationData[0], 'angle', 0, 0.106).name('Hand picking').onChange(function(value) {
+        hand1.rotation.y = -value;
+        hand2.rotation.y = value;
+    });
+
+
+
+
+
+    const arm1FolderLeft = gui.addFolder('right Arm 1 Spin');
+    arm1FolderLeft.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('X').onChange(function(value) {
+        arm1SpinLeft.rotation.x = value;
+    });
+    arm1FolderLeft.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('Y').onChange(function(value) {
+        arm1SpinLeft.rotation.y = value;
+    });
+    arm1FolderLeft.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('Z').onChange(function(value) {
+        arm1SpinLeft.rotation.z = value;
+    });
+
+    const arm2FolderLeft = gui.addFolder('right Arm 2 Spin');
+    arm2FolderLeft.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('X').onChange(function(value) {
+        arm2SpinLeft.rotation.x = value;
+    });
+    arm2FolderLeft.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('Y').onChange(function(value) {
+        arm2SpinLeft.rotation.y = value;
+    });
+    arm2FolderLeft.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('Z').onChange(function(value) {
+        arm2SpinLeft.rotation.z = value;
+    });
+
+    const arm3FolderLeft = gui.addFolder('right Arm 3 Spin');
+    arm3FolderLeft.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('X').onChange(function(value) {
+        arm3SpinLeft.rotation.x = value;
+    });
+    arm3FolderLeft.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('Y').onChange(function(value) {
+        arm3SpinLeft.rotation.y = value;
+    });
+    arm3FolderLeft.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('Z').onChange(function(value) {
+        arm3SpinLeft.rotation.z = value;
+    });
+    gui.add(rotationData[0], 'angle', 0, 2 * Math.PI).name('Wrist rotate').onChange(function(value) {
+        handSysLeft.rotation.x = value;
+    });
+    gui.add(rotationData[0], 'angle', 0,  0.106).name('Hand picking').onChange(function(value) {
+        hand1Left.rotation.y = value;
+        hand2Left.rotation.y = -value;
+    });
+    
+    const floorGeometry = new THREE.PlaneGeometry(10, 10);
+    const floorMaterial = new THREE.ShadowMaterial({ opacity: 0.5 });
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;  // Rotate it to be flat on the ground
+    floor.position.y = -1;  // Position it just below the origin
+    scene.add(floor);
+
+
+    function resizeRendererToDisplaySize( renderer ) {
+
+        const canvas = renderer.domElement;
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        const needResize = canvas.width !== width || canvas.height !== height;
+        if ( needResize ) {
+
+            renderer.setSize( width, height, false );
+
+        }
+
+        return needResize;
+
+    }
+
+    gui.add({ toggle: toggleAnimation }, 'toggle').name('Toggle Animation');
+
+    let isAnimating = true;
+    let lastTime = 0;
+    let elapsedTime = 0;
+
+
+
+
+    function render() {
+        animate();
+    }
+
+    function animate() {
+        if ( resizeRendererToDisplaySize( renderer ) ) {
+
+            const canvas = renderer.domElement;
+            camera.aspect = canvas.clientWidth / canvas.clientHeight;
+            camera.updateProjectionMatrix();
+
+        }
+        
+        const time = performance.now() * 0.001;
+
+        if (isAnimating) {
+            if (lastTime !== 0) { 
+                const deltaTime = time - lastTime;
+                elapsedTime += deltaTime; 
+            }
+            lastTime = time; // Only update when animating
+
+            const minRotation = -Math.PI / 4; 
+            const maxRotation = 0; 
+
+            // Cosine function oscillates between -1 and 1, so we remap its output
+            let t = (Math.cos(elapsedTime) + 1) / 2; // Normalize cosine output from [-1,1] to [0,1]
+            let newRotation = minRotation + t * (maxRotation - minRotation); // Remap to [minRotation, maxRotation]
+            
+            
+            arm1spin.rotation.y = newRotation;
+            arm2spin.rotation.y = newRotation;
+            arm3spin.rotation.y = newRotation;
+            arm1SpinLeft.rotation.y = - newRotation;
+            arm2SpinLeft.rotation.y = - newRotation;
+            arm3SpinLeft.rotation.y = - newRotation;
+
+        } else {
+            lastTime = 0; // Reset lastTime to avoid time jumps when resuming
+        }
+
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    // Toggle Animation
+    function toggleAnimation() {
+        isAnimating = !isAnimating;
+        if (isAnimating) {
+            lastTime = performance.now() * 0.001; // Reset lastTime on resume
+        }
+    }
+
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === " ") { // Press Spacebar to toggle
+            toggleAnimation();
+        }
+    });
+    renderer.setAnimationLoop(render);
+
+
+    //animate();
+}
+
+
+
+
+function bodyright(){
+    const vertices = new Float32Array([
+        2, 5, 0,   
+        7, 12, 0,   
+        5, 15, 0,   
+        2, 15, 0,   
+        4,12,5, 
+        2,10,5]);
+   const indices = [
+        0,2,1,
+        0,3,2,
+        0,1,4,
+        0,4,5,       
+        1,2,4,
+        2,3,4,
+        5,4,3,
+        0,5,3,        
+    ];
+    const geometry = new THREE.BufferGeometry();
+    geometry.setIndex(indices);
+    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+    geometry.computeVertexNormals(); // Adds shading
+    return geometry;
+}
+function bodyleft() {
+    // Get the right side geometry
+    const geometryRight = bodyright();
+
+    // Mirror the vertices by negating the x-coordinates
+    const positions = geometryRight.attributes.position.array;
+    const mirroredVertices = new Float32Array(positions.length);
+    for (let i = 0; i < positions.length; i += 3) {
+        mirroredVertices[i] = -positions[i];     // Negate x-coordinate
+        mirroredVertices[i + 1] = positions[i + 1]; // Keep y-coordinate
+        mirroredVertices[i + 2] = positions[i + 2]; // Keep z-coordinate
+    }
+    const indices = [
+        0, 1,2 ,// Triangle 1 reversed
+        0,  2,3, // Triangle 2 reversed
+        0, 4, 1, // Triangle 3 reversed
+        0, 5, 4, // Triangle 4 reversed
+        1, 4, 2, // Triangle 5 reversed
+        2, 4, 3, // Triangle 6 reversed
+        5, 3, 4, // Triangle 7 reversed
+        0, 3, 5  // Triangle 8 reversed
+    ];
+    // Create geometry for the left side using the mirrored vertices
+    const geometryLeft = new THREE.BufferGeometry();
+    geometryLeft.setIndex(indices); // Use the same indices
+    geometryLeft.setAttribute('position', new THREE.BufferAttribute(mirroredVertices, 3));
+    geometryLeft.computeVertexNormals(); // Recompute normals for shading
+    return geometryLeft;
+}
+
+function mande(geometry,scene){
+    const material = new THREE.MeshPhongMaterial({color: 0x006400, shineness: 10, side:THREE.doubleSide});
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+    const edgesGeometry = new THREE.EdgesGeometry(geometry);
+    const edgesMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
+    const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
+    scene.add(edges);
+}
+
+function pole(scene){
+    const width = 4;  
+    const height = 30;  
+    const depth = 4;  
+    const geometry = new THREE.BoxGeometry( width, height, depth );
+    const material = new THREE.MeshPhongMaterial({color: 0x333333, shineness: 10, side:THREE.doubleSide});
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.y=15;
+    scene.add(mesh);
+}
+
+function joint(){
+    const geometry = new THREE.SphereGeometry( 1, 32, 32 );
+    const material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+    const sphere = new THREE.Mesh( geometry, material );
+    return sphere;
+}
+
+
+
+function arm(){
+	// Create a cylinder
+	const radiusTop = 1.5;    // Top radius of the cylinder
+	const radiusBottom = 1.5; // Bottom radius of the cylinder
+	const height = 10;      // Height of the cylinder
+	const radialSegments = 32; // Number of segmented faces around the circumference
+	const cylinderGeometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, radialSegments);
+
+	// Create a material for the cylinder
+	const cylinderMaterial = new THREE.MeshPhongMaterial({ map:texture }); // Green color
+
+	// Create a mesh using the geometry and material
+	const cylinderMesh = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+
+	 // Rotate 90 degrees around the X-axis
+	return cylinderMesh;
+}
+
+function hand(){
+	const geometry = new THREE.PlaneGeometry(1.5 , 4);
+	const material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+	const plane = new THREE.Mesh( geometry, material );
+	return plane;
+}
+
+
+
+const textureLoader = new THREE.TextureLoader();
+const texture = textureLoader.load('img625.jpg'); // Replace with the path to your texture image
+
+
+
+
+
+
+init();
+
+
+</script>
+
+</html>
